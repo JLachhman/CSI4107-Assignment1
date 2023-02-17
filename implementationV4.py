@@ -104,22 +104,18 @@ def index(corpusDocumentVocabulary, corpusTermFrequency):
     in the vocabulary from the preprocessing function, and the value represents the document 
     frequency which points to a 2D-array storing the document, and term frequency in that document
     '''
-
     invertedIndex = dict()
     sortedVocabulary = sorted(corpusTermFrequency.keys())
-    termsPerDocument = corpusDocumentVocabulary.values()
-
 
     for token in sortedVocabulary:
         # Each token points to a dictionary
         invertedIndex[token] = dict()
         # Each token's dictionary has a key representing a token's document frequency
         documentFrequency = 0
-        for term in termsPerDocument:
-            if token == term:
-                documentFrequency += 1
-
-        invertedIndex[token][documentFrequency] = [documentID, termFrequency]
+        for docID, docTerms in corpusDocumentVocabulary.items():
+                if token in docTerms:
+                    documentFrequency += 1
+        invertedIndex[token][documentFrequency] = [docID, termFrequency]
         # Each token's dictionary has a value represented by a 2D-array that contains
         # a document id containing the term, and the term frequency for that document
 
@@ -127,3 +123,56 @@ def index(corpusDocumentVocabulary, corpusTermFrequency):
     tokens = corpusTermFrequency.items()
     for token in tokens:
         print()
+
+
+    ######################################################################################
+
+    invertedIndex = dict()
+    sortedVocabulary = sorted(corpusTermFrequency.keys())
+
+    for token in sortedVocabulary:
+        # Each token points to a dictionary
+        invertedIndex[token] = dict()
+        # Each token's dictionary has a key representing a token's document frequency
+        for docID, docTerms in corpusDocumentVocabulary.items():
+            if token in docTerms:
+                documentFrequency = 1
+                for tokens in docTerms:
+                    termFrequency = 0
+                    if token==tokens:
+                        termFrequency += 1
+        invertedIndex[token][documentFrequency] = [docID, termFrequency]
+        # Each token's dictionary has a value represented by a 2D-array that contains
+        # a document id containing the term, and the term frequency for that document
+
+    ######################################################################################
+
+    thisdict = {
+        "car1": ["Mustang"],
+        "car2": ["Mustang", "Ford", "Mustang"],
+        "car3": ["Chevrolet"]
+        }
+    print(thisdict)
+
+    brands = ["Mustang", "Chevrolet"]
+    
+    invertedIndex = dict()
+    
+    vocab = dict()
+    vocab["Mustang"] = 2
+    vocab["Chevrolet"] = 1
+    vocab["Ford"] = 1
+    
+    for br in vocab.keys():
+        invertedIndex[br] = dict()
+        docIDAndTF = []
+        carFrequency = 0
+        for cars, brand in thisdict.items():
+            brandFrequency = 0
+            if br in brand:
+                carFrequency += 1
+                for tokens in brand:
+                    if br==tokens:
+                        brandFrequency += 1
+                docIDAndTF.append([cars, brandFrequency])
+        invertedIndex[br][carFrequency] = docIDAndTF
