@@ -1,7 +1,16 @@
+#################################################################################
+# Student Name: Jayden Lachhman
+# Student Number: 8791694
+# Course Code: CSI 4107
+# Group Number: 60
+# Submission Date: 2023-02-14
+#################################################################################
+
 import os
 import re
 import string
 import PorterStemmer
+import math
 
 # Records the frequency of processed tokens found throughout the entire corpus
 corpusTermFrequency = dict()
@@ -22,8 +31,12 @@ for words in stopwordsFile:
 
 def preprocessing():
     '''
+    TYPE-CONTRACT: () -> dict, dict
+    DESCRIPTION: This function reads each document from the folder, and using the <DOCNO>, <HEAD>, and  <TEXT> HTML tags, the
+    words content is processed by removing punctuation, ignoring stopwords, and stemmed to create a vocabulary which takes the
+    form a dictionary where the corpus term frequency, documents and the tokens they contain post-preprocessing and stored.
+    The content after the first paragraph following the openeing <TEXT> HTML tag is ignored for parsing efficiency.
     '''
-    processedDoc = dict()
     documentID = ''
     # Pulls all files from collection folder
     for filenames in os.listdir("test_coll"):
@@ -96,83 +109,49 @@ def preprocessing():
                         # The document preprocessing ends after the first paragraph of text is read
                         # to help with efficiency
                         break
-    return index(corpusDocumentVocabulary, corpusTermFrequency)
+    return indexing(corpusDocumentVocabulary, corpusTermFrequency)
 
-def index(corpusDocumentVocabulary, corpusTermFrequency):
+####################################################################################################################################################################################################################
+
+def indexing(corpusDocumentVocabulary, corpusTermFrequency):
     '''
-    An inverted index can be constructed using nested dictionaries where each key is a token
-    in the vocabulary from the preprocessing function, and the value represents the document 
-    frequency which points to a 2D-array storing the document, and term frequency in that document
+    TYPE-CONTRACT: (dict, dict) -> dict
+    DESCRIPTION: An inverted index can be constructed using nested dictionaries where the outside dictionary
+    key is a token in the vocabulary from the preprocessing function, and the value (representing
+    the inside dictionary) is the document frequency which points to a 2D-array storing the documentID,
+    and term frequency in that document
     '''
     invertedIndex = dict()
     sortedVocabulary = sorted(corpusTermFrequency.keys())
 
+    # Inverted Index Builder
     for token in sortedVocabulary:
         # Each token points to a dictionary
         invertedIndex[token] = dict()
-        # Each token's dictionary has a key representing a token's document frequency
+        # Creating an array to store the Document ID and Term Frequency removes the need for a try/except
+        docIDAndTF = []
         documentFrequency = 0
+        # The corpus dictionary holds key-value pairs corresponding to document IDs and the array of terms
+        # contained in each
         for docID, docTerms in corpusDocumentVocabulary.items():
-                if token in docTerms:
-                    documentFrequency += 1
-        invertedIndex[token][documentFrequency] = [docID, termFrequency]
-        # Each token's dictionary has a value represented by a 2D-array that contains
-        # a document id containing the term, and the term frequency for that document
-
-    # df represents the document frequency, that is how many documents consist of a specific token
-    tokens = corpusTermFrequency.items()
-    for token in tokens:
-        print()
-
-
-    ######################################################################################
-
-    invertedIndex = dict()
-    sortedVocabulary = sorted(corpusTermFrequency.keys())
-
-    for token in sortedVocabulary:
-        # Each token points to a dictionary
-        invertedIndex[token] = dict()
-        # Each token's dictionary has a key representing a token's document frequency
-        for docID, docTerms in corpusDocumentVocabulary.items():
+            termFrequency = 0
+            # For each document, if each token has at least one instance, document frequency increments by one
             if token in docTerms:
-                documentFrequency = 1
+                documentFrequency += 1
+                # Iterating through the total tokens of a document and incrementing a count each time a token
+                # matches the desired token in the vocabulary
                 for tokens in docTerms:
-                    termFrequency = 0
                     if token==tokens:
                         termFrequency += 1
-        invertedIndex[token][documentFrequency] = [docID, termFrequency]
-        # Each token's dictionary has a value represented by a 2D-array that contains
-        # a document id containing the term, and the term frequency for that document
+                # Only add the array to the inverted index's outside dictionary value if the desired token 
+                # exists in the document
+                docIDAndTF.append([docID, termFrequency])
+        # Update inverted index
+        invertedIndex[token][documentFrequency] = docIDAndTF
 
-    ######################################################################################
+    # tfidf 
+    
+####################################################################################################################################################################################################################
 
-    thisdict = {
-        "car1": ["Mustang"],
-        "car2": ["Mustang", "Ford", "Mustang"],
-        "car3": ["Chevrolet"]
-        }
-    print(thisdict)
-
-    brands = ["Mustang", "Chevrolet"]
-    
-    invertedIndex = dict()
-    
-    vocab = dict()
-    vocab["Mustang"] = 2
-    vocab["Chevrolet"] = 1
-    vocab["Ford"] = 1
-    
-    for br in vocab.keys():
-        invertedIndex[br] = dict()
-        docIDAndTF = []
-        carFrequency = 0
-        for cars, brand in thisdict.items():
-            brandFrequency = 0
-            if br in brand:
-                carFrequency += 1
-                for tokens in brand:
-                    if br==tokens:
-                        brandFrequency += 1
-                docIDAndTF.append([cars, brandFrequency])
-        invertedIndex[br][carFrequency] = docIDAndTF
+def rankAndRetrieve():
+    print()
