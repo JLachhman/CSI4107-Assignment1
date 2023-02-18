@@ -124,7 +124,8 @@ def indexing(corpusDocumentVocabulary, corpusTermFrequency):
     invertedIndex = dict()
     sortedVocabulary = sorted(corpusTermFrequency.keys())
 
-    # Inverted Index Builder
+    # INVERTED INDEX BUILDER
+
     for token in sortedVocabulary:
         # Each token points to a dictionary
         invertedIndex[token] = dict()
@@ -149,7 +150,27 @@ def indexing(corpusDocumentVocabulary, corpusTermFrequency):
         # Update inverted index
         invertedIndex[token][documentFrequency] = docIDAndTF
 
-    # tfidf 
+    # CALCULATING TFIDF
+
+    # Removes duplicate terms and creates a dictionary storing document ids and their lengths
+    documentVector = dict()
+    for docIDs, tokens in corpusDocumentVocabulary.items():
+        corpusDocumentVocabulary[docIDs] = list(dict.fromkeys(tokens))
+        documentVector[docIDs] = len(corpusDocumentVocabulary[docIDs])
+
+    # Makes reference to the number more simple
+    totalNumberOfDocuments = len(documentVector.keys())
+    
+    # Calculating idf values for each word and storing them in dictionary
+    for word in invertedIndex.keys():
+        df = list(invertedIndex[word].keys())[0]
+        sortedVocabulary[word] = math.log(totalNumberOfDocuments/df, 2)
+
+    
+
+
+
+    
     
 ####################################################################################################################################################################################################################
 
