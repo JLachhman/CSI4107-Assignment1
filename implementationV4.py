@@ -12,6 +12,12 @@ import string
 import PorterStemmer
 import math
 
+# Records each query
+queries = dict()
+
+# Records the maximum term frequency per query
+queryMaxFrequency = dict()
+
 # Records the frequency of processed tokens found throughout the entire corpus
 corpusTermFrequency = dict()
 
@@ -38,7 +44,9 @@ def preprocessing():
     The content after the first paragraph following the openeing <TEXT> HTML tag is ignored for parsing efficiency.
     '''
     documentID = ''
-    # Pulls all files from collection folder
+
+    # EXTRACTS ALL PERTINENT TEXT FROM EACH DOCUMENT
+
     for filenames in os.listdir("test_coll"):
         path = 'test_coll\\' + filenames
         # Pulls one file from set of files
@@ -86,6 +94,7 @@ def preprocessing():
                         # and stems the input string using PorterStemmer tool which returns the
                         # document's vocabulary
                         for word in unpreprocessedWords:
+                            # Skips stopwords
                             if (word in stopwords or not word.isalpha()):
                                 continue
                             # Using PorterStemmer library, each stemmed word is added to corupus vocabulary
@@ -150,7 +159,7 @@ def indexing(corpusDocumentVocabulary, corpusTermFrequency):
         # Update inverted index
         invertedIndex[token][documentFrequency] = docIDAndTF
 
-    # CALCULATING TFIDF
+    # CALCULATING CORPUS TF-IDF
 
     # Removes duplicate terms and creates a dictionary storing document ids and their lengths
     documentVector = dict()
@@ -158,7 +167,7 @@ def indexing(corpusDocumentVocabulary, corpusTermFrequency):
         corpusDocumentVocabulary[docIDs] = list(dict.fromkeys(tokens))
         documentVector[docIDs] = len(corpusDocumentVocabulary[docIDs])
 
-    # Makes reference to the number more simple
+    # Reference to the total number of documents
     totalNumberOfDocuments = len(documentVector.keys())
     
     # Calculating idf values for each word and storing them in dictionary
@@ -166,13 +175,72 @@ def indexing(corpusDocumentVocabulary, corpusTermFrequency):
         df = list(invertedIndex[word].keys())[0]
         sortedVocabulary[word] = math.log(totalNumberOfDocuments/df, 2)
 
-    
-
-
-
-    
+    # Calculating td-idf
+    for terms, tf in corpusTermFrequency.items():
+        idf = sortedVocabulary[terms]
+        tfidf = tf * idf
+        sortedVocabulary[terms] = tfidf
     
 ####################################################################################################################################################################################################################
 
 def rankAndRetrieve():
-    print()
+    
+    # EXTRACTS ALL PERTINENT TEXT FROM EACH QUERY
+
+    queryID = ''
+    path = "queries.txt"
+    with open(path, "r") as file:
+        lines = file.readlines()
+        for line in lines:
+            # Checks if each line is non-empty before parsing
+            if line.strip() == "":
+                continue
+            # Checks for <num> HTML tag and removes it but saves the content after
+            elif (line.find('<num>') != -1):
+                    line = re.sub('<num>', '', line)
+                    line = line.strip()
+                    queryID = line
+            # Checks for <title> HTML tag and removes it but preprocesses the content after
+            elif (line.find('<title>') != 1):
+                line = re.sub('<title>', '', line)
+                line = line.strip()
+                # Removes punctuation
+                line = line.translate(str.maketrans('', '', string.punctuation))
+                titleWords = line.split()
+                for word in titleWords:
+                    # Skips stopwords
+                    if (word in stopwords or not word.isalpha()):
+                        continue
+                    # Using PorterStemmer library, each stemmed word is added to query vocabulary
+                    # if not present, and its term frequency is incremented
+                    try:
+                        ps = PorterStemmer()
+                        stemmed = ps.stem(word)
+                        queries[queryID].append(word)
+                        # Each term will be a novel encounter at some point, which will throw a KeyError
+                        # because the term index in need of accessing does not exist yet. In that case,
+                        # it is given an index in the queryID's vocabulary
+                    except KeyError:
+                        stemmed = ps.stem(word)
+                        try:
+                            queries[queryID].append(stemmed)
+                        except:
+                            queries[queryID] = [stemmed]
+                        # The query preprocessing ends after the title is read to help with efficiency
+                        break
+
+    # CALCULATE QUERY TF-IDF
+
+    # Stores the maximum term frequency for each query in a dictionary
+    for queryID, words in queries.items():
+        maxCount = 0
+        for word in words:
+            frequency = words.count(word)
+            if frequency > maxCount:
+                maxCount = frequency
+        queryMaxFrequency[queryID] = maxCount
+
+    # 
+    # for words in query:
+
+    #     queryVector = 
