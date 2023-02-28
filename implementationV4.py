@@ -15,14 +15,17 @@ import math
 # Records each query
 queries = dict()
 
-# Records the maximum term frequency per query
-queryMaxFrequency = dict()
+# Stores the maximum term frequency per query
+queryTermFrequency = dict()
 
-# Records the frequency of processed tokens found throughout the entire corpus
+# Stores the frequency of processed tokens found throughout the entire corpus
 corpusTermFrequency = dict()
 
-# Records the names of all documents in the corpus and the unique tokens contained in each
+# Stores the names of all documents in the corpus and the unique tokens contained in each
 corpusDocumentVocabulary = dict()
+
+# Stores tfidf values for terms across documents
+termTFIDF = dict()
 
 # Reference to a list of stopwords provided by the professor in the assignment outline
 stopwords = []
@@ -145,7 +148,7 @@ def indexing(corpusDocumentVocabulary, corpusTermFrequency):
         # contained in each
         for docID, docTerms in corpusDocumentVocabulary.items():
             termFrequency = 0
-            # For each document, if each token has at least one instance, document frequency increments by one
+            # For each document, if the token is found at least once, document frequency increments by one
             if token in docTerms:
                 documentFrequency += 1
                 # Iterating through the total tokens of a document and incrementing a count each time a token
@@ -171,15 +174,15 @@ def indexing(corpusDocumentVocabulary, corpusTermFrequency):
     totalNumberOfDocuments = len(documentVector.keys())
     
     # Calculating idf values for each word and storing them in dictionary
-    for word in invertedIndex.keys():
-        df = list(invertedIndex[word].keys())[0]
-        sortedVocabulary[word] = math.log(totalNumberOfDocuments/df, 2)
+    for terms in invertedIndex.keys():
+        df = list(invertedIndex[terms].keys())[0]
+        termTFIDF[terms] = math.log(totalNumberOfDocuments/df, 2)
 
     # Calculating td-idf
     for terms, tf in corpusTermFrequency.items():
-        idf = sortedVocabulary[terms]
+        idf = termTFIDF[terms]
         tfidf = tf * idf
-        sortedVocabulary[terms] = tfidf
+        termTFIDF[terms] = tfidf
     
 ####################################################################################################################################################################################################################
 
@@ -233,14 +236,20 @@ def rankAndRetrieve():
 
     # Stores the maximum term frequency for each query in a dictionary
     for queryID, words in queries.items():
-        maxCount = 0
+        queryTermFrequency[queryID] = dict()
+        maxFrequency = 0
         for word in words:
             frequency = words.count(word)
-            if frequency > maxCount:
-                maxCount = frequency
-        queryMaxFrequency[queryID] = maxCount
+            queryTermFrequency[queryID][word] = frequency
+    
+    # Each query's id is stored in the queryTermFrequency dictionary, which points to a nested dictionary storing each
+    # of the keywords in that query and its frequency. We need the max frequency to calculate the tf quotient of a query
+    # so the idea is to use the max() method on a list of all of the query term frequencies to attain it
+    maxFrequency = max(list(queryTermFrequency.keys().values()))
 
-    # 
-    # for words in query:
 
-    #     queryVector = 
+# THE IDF VALUES USED TO CALCULATE THE QUERY VECTOR ARE THE SAME ONES FROM THE ALREADY CALCULATED IDF VALUES FROM THE DOCUMENT TERMS
+    for terms, tfidfs in termTFIDF.items():
+        tfidf = termTFIDF[terms]
+
+    
