@@ -15,8 +15,11 @@ import math
 # Records each query
 queries = dict()
 
-# Stores the maximum term frequency per query
-queryTermFrequency = dict()
+# Stores the weights of each term in a query
+queryVector = dict()
+
+# Stores the weights of each term in a document
+documentVector = dict()
 
 # Stores the frequency of processed tokens found throughout the entire corpus
 corpusTermFrequency = dict()
@@ -24,7 +27,10 @@ corpusTermFrequency = dict()
 # Stores the names of all documents in the corpus and the unique tokens contained in each
 corpusDocumentVocabulary = dict()
 
-# Stores tfidf values for terms across documents
+# Stores idf values for terms across corpus
+termIDF = dict()
+
+# Stores tfidf values for terms across corpus
 termTFIDF = dict()
 
 # Reference to a list of stopwords provided by the professor in the assignment outline
@@ -164,26 +170,35 @@ def indexing(corpusDocumentVocabulary, corpusTermFrequency):
 
     # CALCULATING CORPUS TF-IDF
 
-    # Removes duplicate terms and creates a dictionary storing document ids and their lengths
-    documentVector = dict()
+    # Removes duplicate terms
     for docIDs, tokens in corpusDocumentVocabulary.items():
         corpusDocumentVocabulary[docIDs] = list(dict.fromkeys(tokens))
-        documentVector[docIDs] = len(corpusDocumentVocabulary[docIDs])
 
     # Reference to the total number of documents
-    totalNumberOfDocuments = len(documentVector.keys())
+    totalNumberOfDocuments = len(corpusDocumentVocabulary.keys())
     
     # Calculating idf values for each word and storing them in dictionary
     for terms in invertedIndex.keys():
         df = list(invertedIndex[terms].keys())[0]
-        termTFIDF[terms] = math.log(totalNumberOfDocuments/df, 2)
+        idf = math.log(totalNumberOfDocuments/df, 2)
+        termIDF[terms] = idf
 
-    # Calculating td-idf
+    # CHECK WHY THIS WAS EVEN CALCULATED?? I DON'T THINK WE NEED A CORPUS TF
+    # Calculating tf-idf
     for terms, tf in corpusTermFrequency.items():
-        idf = termTFIDF[terms]
+        idf = termIDF[terms]
         tfidf = tf * idf
         termTFIDF[terms] = tfidf
-    
+
+    # Calculating document vectors
+    for docID, tokens in corpusDocumentVocabulary.items():
+        documentVector[docID] = dict()
+        for token in tokens:
+            # WE NEED TO EXTRACT THE termFrequency dimension from the invertedIndex dictionary that corresponds to the word we want
+            frequency = invertedIndex[token][...]
+            frequency = tokens.count(token)
+            documentVector[docID][token] = frequency*termIDF[token]
+     
 ####################################################################################################################################################################################################################
 
 def rankAndRetrieve():
@@ -234,22 +249,9 @@ def rankAndRetrieve():
 
     # CALCULATE QUERY TF-IDF
 
-    # Stores the maximum term frequency for each query in a dictionary
+    # Stores the maximum term frequency for each query in a dictionary and creates each query vector
     for queryID, words in queries.items():
-        queryTermFrequency[queryID] = dict()
-        maxFrequency = 0
+        queryVector[queryID] = dict()
         for word in words:
             frequency = words.count(word)
-            queryTermFrequency[queryID][word] = frequency
-    
-    # Each query's id is stored in the queryTermFrequency dictionary, which points to a nested dictionary storing each
-    # of the keywords in that query and its frequency. We need the max frequency to calculate the tf quotient of a query
-    # so the idea is to use the max() method on a list of all of the query term frequencies to attain it
-    maxFrequency = max(list(queryTermFrequency.keys().values()))
-
-
-# THE IDF VALUES USED TO CALCULATE THE QUERY VECTOR ARE THE SAME ONES FROM THE ALREADY CALCULATED IDF VALUES FROM THE DOCUMENT TERMS
-    for terms, tfidfs in termTFIDF.items():
-        tfidf = termTFIDF[terms]
-
-    
+            queryVector[queryID][word] = (0.5 + 0.5*frequency)*termIDF[word]
