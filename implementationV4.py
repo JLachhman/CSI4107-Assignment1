@@ -16,10 +16,16 @@ import math
 queries = dict()
 
 # Stores the weights of each term in a query
-queryVector = dict()
+queryVectors = dict()
+
+# Stores the query length of each query
+queryLengths = dict()
 
 # Stores the weights of each term in a document
-documentVector = dict()
+documentVectors = dict()
+
+# Stores the document length of each document
+documentLengths = dict()
 
 # Stores the frequency of processed tokens found throughout the entire corpus
 corpusTermFrequency = dict()
@@ -29,9 +35,6 @@ corpusDocumentVocabulary = dict()
 
 # Stores idf values for terms across corpus
 termIDF = dict()
-
-# Stores tfidf values for terms across corpus
-termTFIDF = dict()
 
 # Reference to a list of stopwords provided by the professor in the assignment outline
 stopwords = []
@@ -183,21 +186,24 @@ def indexing(corpusDocumentVocabulary, corpusTermFrequency):
         idf = math.log(totalNumberOfDocuments/df, 2)
         termIDF[terms] = idf
 
-    # CHECK WHY THIS WAS EVEN CALCULATED?? I DON'T THINK WE NEED A CORPUS TF
-    # Calculating tf-idf
-    for terms, tf in corpusTermFrequency.items():
-        idf = termIDF[terms]
-        tfidf = tf * idf
-        termTFIDF[terms] = tfidf
+    # Creating Document Vectors
+    for docIDs, docTerms in corpusDocumentVocabulary.items():
+        documentVectors[docIDs] = dict()
+        for term in docTerms:
+            docFreqList = list(invertedIndex[term].values())[0]
+            wordFreq = 0
+            for docs in docFreqList:
+                if docs[0]==docIDs:
+                    wordFreq = docs[1]
+            documentVectors[docIDs][term] = wordFreq*termIDF[term]
 
-    # Calculating document vectors
-    for docID, tokens in corpusDocumentVocabulary.items():
-        documentVector[docID] = dict()
-        for token in tokens:
-            # WE NEED TO EXTRACT THE termFrequency dimension from the invertedIndex dictionary that corresponds to the word we want
-            frequency = invertedIndex[token][...]
-            frequency = tokens.count(token)
-            documentVector[docID][token] = frequency*termIDF[token]
+    # Calculating Document Lengths
+    for docIDs, terms in documentVectors.items():
+        length = 0
+        for term in terms:
+            tfidf = documentVectors[docIDs][term]
+            length = tfidf*tfidf
+        documentLengths[docIDs] = math.sqrt(length)
      
 ####################################################################################################################################################################################################################
 
@@ -249,9 +255,22 @@ def rankAndRetrieve():
 
     # CALCULATE QUERY TF-IDF
 
-    # Stores the maximum term frequency for each query in a dictionary and creates each query vector
+    # Creating Query Vectors
     for queryID, words in queries.items():
-        queryVector[queryID] = dict()
+        queryVectors[queryID] = dict()
         for word in words:
             frequency = words.count(word)
-            queryVector[queryID][word] = (0.5 + 0.5*frequency)*termIDF[word]
+            queryVectors[queryID][word] = (0.5 + 0.5*frequency)*termIDF[word]
+
+    # Calculating Query Lengths
+    for queryIDs, words in queryVectors.items():
+        length = 0
+        for word in words:
+            tfidf = queryVectors[queryIDs][words]
+            length = tfidf*tfidf
+        queryLengths[queryIDs] = math.sqrt(length)
+
+    # Calculating Cosine Similarities
+    for queryIDs, words in queryVectors.items():
+        cosSim = 0
+        
