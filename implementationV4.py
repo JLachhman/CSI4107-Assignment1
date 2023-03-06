@@ -202,7 +202,7 @@ def indexing(corpusDocumentVocabulary, corpusTermFrequency):
         length = 0
         for term in terms:
             tfidf = documentVectors[docIDs][term]
-            length = tfidf*tfidf
+            length += tfidf*tfidf
         documentLengths[docIDs] = math.sqrt(length)
      
 ####################################################################################################################################################################################################################
@@ -267,7 +267,7 @@ def rankAndRetrieve():
         length = 0
         for word in words:
             tfidf = queryVectors[queryIDs][words]
-            length = tfidf*tfidf
+            length += tfidf*tfidf
         queryLengths[queryIDs] = math.sqrt(length)
 
     # Calculating Cosine Similarities
